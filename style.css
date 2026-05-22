@@ -1,0 +1,28 @@
+/* style.css */
+.stApp {
+    background-color: #f8f9fa;
+}
+
+h1 {
+    color: #1e3a8a;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.stButton>button {
+    width: 100%;
+    border-radius: 8px;
+    height: 3em;
+    background-color: #2563eb !important;
+    color: white !important;
+}
+
+.prediction-box {
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    margin-top: 10px;
+}
+
+.status-awas { background-color: #fee2e2; border-color: #ef4444; color: #b91c1c; }
+.status-siaga { background-color: #ffedd5; border-color: #f97316; color: #c2410c; }
+.status-normal { background-color: #dcfce7; border-color: #22c55e; color: #15803d; }
