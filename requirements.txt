@@ -1,9 +1,12 @@
-streamlit
+flask
+flask-cors
 pandas
 scikit-learn
+xgboost
+numpy
+streamlit
 matplotlib
 seaborn
 imbalanced-learn
-xgboost
 streamlit-folium
 openpyxl
