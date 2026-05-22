@@ -7,15 +7,46 @@ from pathlib import Path
 
 app = Flask(__name__)
 
-# Load model
-MODEL_PATH = Path(__file__).parent.parent / 'model_banjir.pkl'
+def load_model_from_s3():
+    """Download model from AWS S3"""
+    try:
+        import boto3
+        s3 = boto3.client('s3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+            region_name=os.getenv('AWS_REGION', 'us-east-1')
+        )
+        
+        bucket = os.getenv('S3_BUCKET')
+        s3.download_file(bucket, 'model_banjir.pkl', '/tmp/model_banjir.pkl')
+        
+        with open('/tmp/model_banjir.pkl', 'rb') as f:
+            print("✅ Model loaded from S3")
+            return pickle.load(f)
+    except Exception as e:
+        print(f"Error loading from S3: {e}")
+        return None
 
-try:
-    with open(MODEL_PATH, 'rb') as f:
-        model = pickle.load(f)
-except Exception as e:
-    print(f"Error loading model: {e}")
-    model = None
+def load_model():
+    """Load model from local file or S3"""
+    # Try local first
+    local_path = Path(__file__).parent.parent / 'model_banjir.pkl'
+    if local_path.exists():
+        try:
+            with open(local_path, 'rb') as f:
+                print("✅ Model loaded locally")
+                return pickle.load(f)
+        except Exception as e:
+            print(f"Error loading locally: {e}")
+    
+    # Fallback to S3
+    if os.getenv('S3_BUCKET'):
+        return load_model_from_s3()
+    
+    print("❌ Model not found locally or in S3")
+    return None
+
+model = load_model()
 
 # Flood level mapping based on TMA thresholds
 def get_flood_level(tma):
