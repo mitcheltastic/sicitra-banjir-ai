@@ -4,9 +4,3 @@ pandas
 scikit-learn
 xgboost
 numpy
-streamlit
-matplotlib
-seaborn
-imbalanced-learn
-streamlit-folium
-openpyxl
