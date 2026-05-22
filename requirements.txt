@@ -6,3 +6,5 @@ xgboost
 numpy
 boto3
 gunicorn
+psycopg2-binary
+python-dotenv

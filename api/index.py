@@ -1,11 +1,26 @@
 import os
 import pickle
+import logging
 import numpy as np
 import pandas as pd
 from flask import Flask, request, jsonify
 from pathlib import Path
+from dotenv import load_dotenv
+from .db import init_db, save_prediction
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
+
+# Initialize DB pool at import time (will be a no-op if DATABASE_URL not set)
+try:
+    init_db()
+except Exception as e:
+    logging.warning(f"DB init skipped: {e}")
+
+
 
 def load_model_from_s3():
     """Download model from AWS S3"""
@@ -147,27 +162,35 @@ def predict():
         
         description = class_descriptions.get(prediction_class, "Unknown")
         
+        # Build the response payload
+        prediction_data = {
+            "flood_level": flood_level_str,
+            "flood_class": int(prediction_class),
+            "class_probability": {
+                "class_0_normal": float(prediction_proba[0]) if len(prediction_proba) > 0 else 0,
+                "class_1_waspada": float(prediction_proba[1]) if len(prediction_proba) > 1 else 0,
+                "class_2_siaga": float(prediction_proba[2]) if len(prediction_proba) > 2 else 0,
+                "class_3_awas": float(prediction_proba[3]) if len(prediction_proba) > 3 else 0,
+            },
+            "tma_value": tinggi_muka_air,
+            "description": description,
+            "risk_level": flood_level_str.split(' - ')[0]
+        }
+
+        input_data = {
+            "curah_hujan": curah_hujan,
+            "debit_air": debit_air,
+            "tinggi_muka_air": tinggi_muka_air,
+            "tinggi_genangan": tinggi_genangan
+        }
+
+        # --- STEP 4: Save to database (only on success) ---
+        save_prediction(input_received=input_data, prediction=prediction_data)
+
         return jsonify({
             "success": True,
-            "prediction": {
-                "flood_level": flood_level_str,
-                "flood_class": int(prediction_class),
-                "class_probability": {
-                    "class_0_normal": float(prediction_proba[0]) if len(prediction_proba) > 0 else 0,
-                    "class_1_waspada": float(prediction_proba[1]) if len(prediction_proba) > 1 else 0,
-                    "class_2_siaga": float(prediction_proba[2]) if len(prediction_proba) > 2 else 0,
-                    "class_3_awas": float(prediction_proba[3]) if len(prediction_proba) > 3 else 0,
-                },
-                "tma_value": tinggi_muka_air,
-                "description": description,
-                "risk_level": flood_level_str.split(' - ')[0]
-            },
-            "input_received": {
-                "curah_hujan": curah_hujan,
-                "debit_air": debit_air,
-                "tinggi_muka_air": tinggi_muka_air,
-                "tinggi_genangan": tinggi_genangan
-            }
+            "prediction": prediction_data,
+            "input_received": input_data
         }), 200
         
     except ValueError as e:
