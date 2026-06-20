@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from pathlib import Path
 from dotenv import load_dotenv
 from .db import init_db, save_prediction
@@ -12,6 +13,7 @@ from .db import init_db, save_prediction
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 logging.basicConfig(level=logging.INFO)
 
 # Initialize DB pool at import time (will be a no-op if DATABASE_URL not set)
